@@ -1,4 +1,4 @@
-#include "SerialPort.h"
+
 
 
 static void qemu_gdb_hang(void)
@@ -12,11 +12,12 @@ static void qemu_gdb_hang(void)
 
 #include <desc.h>
 #include <ints.h>
+#include "SerialPort.h"
 
 void main(void)
 {
         serial_port_init();
-        char const * hw = "Hello, World\n";
+        char *hw = "Hello, World\n";
 	serial_port_write_char(hw);
 
 	qemu_gdb_hang();
