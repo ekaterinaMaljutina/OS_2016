@@ -16,8 +16,8 @@ static void qemu_gdb_hang(void)
 void main(void)
 {
         serial_port_init();
-        char hw[13] = "Hello, World\n";
-	serial_port_write_string(hw,13);
+        char const * hw = "Hello, World\n";
+	serial_port_write_char(hw);
 
 	qemu_gdb_hang();
 
