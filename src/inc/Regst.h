@@ -1,6 +1,7 @@
 #ifndef __REGISTER_H__
 #define __REGISTER_H__
 
+#include <stdint.h>
 
 struct registers_t {
     uint64_t rg_15;
@@ -33,11 +34,6 @@ struct idt_entry {
    uint32_t reserved;
 } __attribute__((packed));
 
-struct descrip_table {
-	uint16_t size;
-	uint64_t base;
-} __attribute__((packed));
 
 
-
-#endif /*__REGISTER__*/
+#endif /*__REGISTER_H__*/
