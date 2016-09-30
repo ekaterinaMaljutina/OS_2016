@@ -240,3 +240,133 @@ handler30:
 handler31: 
     subq $8, %rsp
     jmp handler_stub
+
+
+#PIC 32 to 47 !!!! 
+#.extern handler31
+
+handler_irq:
+    pushq %rax
+    pushq %rbx
+    pushq %rcx
+    pushq %rdx
+    pushq %rsi
+    pushq %rdi
+    pushq %rbp
+    pushq %r8
+    pushq %r9
+    pushq %r10
+    pushq %r11
+    pushq %r12
+    pushq %r13
+    pushq %r14
+    pushq %r15
+    movq    %rsp, %rdi
+    cld
+    call handler
+    popq %r15
+    popq %r14
+    popq %r13
+    popq %r12
+    popq %r11
+    popq %r10
+    popq %r9
+    popq %r8
+    popq %rbp
+    popq %rdi
+    popq %rsi
+    popq %rdx
+    popq %rcx
+    popq %rbx
+    popq %rax
+    addq $0x8, %rsp
+    iretq
+
+
+.global handler32
+handler32:
+    pushq $32
+    jmp handler_irq
+
+
+.global handler33
+handler33:
+    pushq $33
+    jmp handler_irq
+
+
+.global handler34
+handler34:
+    pushq $34
+    jmp handler_irq
+
+
+.global handler35
+handler35:
+    pushq $35
+    jmp handler_irq
+
+.global handler36
+handler36:
+    pushq $36
+    jmp handler_irq
+
+.global handler37
+handler37:
+    pushq $37
+    jmp handler_irq
+
+
+
+.global handler38
+handler38:
+    pushq $38
+    jmp handler_irq
+
+.global handler39
+handler39:
+    pushq $39
+    jmp handler_irq
+
+
+
+.global handler40
+handler40:
+    pushq $40
+    jmp handler_irq
+
+
+.global handler41
+handler41:
+    pushq $41
+    jmp handler_irq
+
+.global handler42
+handler42:
+    pushq $42
+    jmp handler_irq
+
+.global handler43
+handler43:
+    pushq $43
+    jmp handler_irq
+
+.global handler44
+handler44:
+    pushq $44
+    jmp handler_irq
+
+.global handler45
+handler45:
+    pushq $45
+    jmp handler_irq
+
+.global handler46
+handler46:
+    pushq $46
+    jmp handler_irq
+
+.global handler47
+handler47:
+    pushq $47
+    jmp handler_irq

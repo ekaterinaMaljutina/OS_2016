@@ -55,6 +55,25 @@ extern void handler29();
 extern void handler30();
 extern void handler31();
 
+//irq 
+extern void handler32();
+extern void handler33();
+extern void handler34();
+extern void handler35();
+extern void handler36();
+extern void handler37();
+extern void handler38();
+extern void handler39();
+extern void handler40();
+extern void handler41();
+extern void handler42();
+extern void handler43();
+extern void handler44();
+extern void handler45();
+extern void handler46();
+extern void handler47();
+
+
 void intr_install(){
 	idt_set_gate(0, (uint64_t) handler0,  KERNEL_CS, 0x8E);
 	idt_set_gate(1, (uint64_t) handler1,  KERNEL_CS, 0x8E);   
@@ -87,7 +106,26 @@ void intr_install(){
 	idt_set_gate(28, (uint64_t) handler28,  KERNEL_CS, 0x8E);
 	idt_set_gate(29, (uint64_t) handler29,  KERNEL_CS, 0x8E);
 	idt_set_gate(30, (uint64_t) handler30,  KERNEL_CS, 0x8E);
-	idt_set_gate(31, (uint64_t) handler31,  KERNEL_CS, 0x8E);   
+	idt_set_gate(31, (uint64_t) handler31,  KERNEL_CS, 0x8E); 
+
+	//irq
+	idt_set_gate(32, (uint64_t) handler32,  KERNEL_CS, 0x8E);
+	idt_set_gate(33, (uint64_t) handler33,  KERNEL_CS, 0x8E); 
+	idt_set_gate(34, (uint64_t) handler34,  KERNEL_CS, 0x8E);
+	idt_set_gate(35, (uint64_t) handler35,  KERNEL_CS, 0x8E); 
+	idt_set_gate(36, (uint64_t) handler36,  KERNEL_CS, 0x8E);
+	idt_set_gate(37, (uint64_t) handler37,  KERNEL_CS, 0x8E); 
+	idt_set_gate(38, (uint64_t) handler38,  KERNEL_CS, 0x8E);
+	idt_set_gate(39, (uint64_t) handler39,  KERNEL_CS, 0x8E);
+	idt_set_gate(40, (uint64_t) handler40,  KERNEL_CS, 0x8E);
+	idt_set_gate(41, (uint64_t) handler41,  KERNEL_CS, 0x8E);   
+	idt_set_gate(42, (uint64_t) handler42,  KERNEL_CS, 0x8E); 
+	idt_set_gate(43, (uint64_t) handler43,  KERNEL_CS, 0x8E);
+	idt_set_gate(44, (uint64_t) handler44,  KERNEL_CS, 0x8E);
+	idt_set_gate(45, (uint64_t) handler45,  KERNEL_CS, 0x8E);
+	idt_set_gate(46, (uint64_t) handler46,  KERNEL_CS, 0x8E);
+	idt_set_gate(47, (uint64_t) handler47,  KERNEL_CS, 0x8E); 
+
 }
 
 char const * const error_code_out[32]={
