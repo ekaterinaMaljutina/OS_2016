@@ -56,39 +56,49 @@ handler1:
 
 .global handler2
 handler2:
-    #subq $8, %rsp
-    #pushq $0
+    subq $8, %rsp
+    pushq $0
     jmp handler_stub
 
 
 .global handler3
 handler3:
-    #subq $8, %rsp
-    #pushq $0
+    subq $8, %rsp
+    pushq $0
     jmp handler_stub
 
 
 .global handler4
 handler4:
+    subq $8, %rsp
+    pushq $0
     jmp handler_stub
 
 
 
 .global handler5
 handler5:
+    subq $8, %rsp
+    pushq $0
     jmp handler_stub
 
 
 .global handler6
 handler6:
+    subq $8, %rsp
+    pushq $0
     jmp handler_stub
 
 
 
 .global handler7
 handler7:
+    subq $8, %rsp
+    pushq $0
     jmp handler_stub
 
 .global handler8
 handler8: #код ошибки есть на стеке
+    subq $8, %rsp
+    pushq $0
     jmp handler_stub

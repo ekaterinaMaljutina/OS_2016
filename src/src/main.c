@@ -9,18 +9,22 @@ static void qemu_gdb_hang(void)
 
 
 #include <ints.h>
-
-//#include "interrupt.h"
+#include "ioport.h"
+#include "interrupt.h"
 #include "SerialPort.h"
+
+
 
 void main(void)
 {
     serial_port_init();
     char *hw = "Hello, World\n";
 	serial_port_write_char(hw);
+	idt_install();
+	intr_install();
 
-	//idt_install();
-
+	__asm__ volatile("int $0x0");
+	__asm__ volatile("int $0x0");
 	qemu_gdb_hang();
 
 	while (1);

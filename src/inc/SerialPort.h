@@ -7,6 +7,6 @@ void serial_port_init();
 
 void serial_port_write(char const value);
 void serial_port_write_char(char const * value);
-void serial_port_write_string(char const * value, uint32_t size);
+void serial_port_write_string(char const * value, uint32_t const size);
 
 #endif // __SERIALPORT_H_
