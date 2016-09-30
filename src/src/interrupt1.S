@@ -240,3 +240,6 @@ handler30:
 handler31: 
     subq $8, %rsp
     jmp handler_stub
+
+
+#PIC 32 to 47 !!!! 
