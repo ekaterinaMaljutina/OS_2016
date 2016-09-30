@@ -22,7 +22,7 @@ void serial_port_write(char const value) {
 	out8(0x3f8,value);
 }
 
-void serial_port_write_string(char const * value, uint32_t const size){
+void serial_port_write_string(char const * const value, uint32_t const size){
 
 	for (uint32_t i=0; i<size ; i++){
 		serial_port_write(value[i]);
@@ -31,7 +31,7 @@ void serial_port_write_string(char const * value, uint32_t const size){
 }
 
 
-void serial_port_write_char(char const * value){
+void serial_port_write_char(char const * const value){
 	uint32_t i=0;
 	while (value[i]){
 		serial_port_write(value[i]);
