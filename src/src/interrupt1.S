@@ -71,7 +71,7 @@ handler3:
 .global handler4
 handler4:
     subq $8, %rsp
-    pushq $4
+    pushq $8
     jmp handler_stub
 
 
@@ -110,7 +110,7 @@ handler9:
     jmp handler_stub
 
 .global handler10
-handler10: 
+handler10: #код ошибки есть на стеке
     pushq $10
     jmp handler_stub
 
