@@ -16,13 +16,13 @@ void serial_port_init() {
 	out8(0x3f8+3, 0x3); // 8 бит на кадр
 }
 
-void serial_port_write(char value) {
+void serial_port_write(char const value) {
 	while (!has_data())
 		;
 	out8(0x3f8,value);
 }
 
-void serial_port_write_string(char* value, uint32_t size){
+void serial_port_write_string(char const * value, uint32_t size){
 
 	for (uint32_t i=0; i<size ; i++){
 		serial_port_write(value[i]);
@@ -31,7 +31,7 @@ void serial_port_write_string(char* value, uint32_t size){
 }
 
 
-void serial_port_write_char(char* value){
+void serial_port_write_char(char const * value){
 	uint32_t i=0;
 	while (value[i]){
 		serial_port_write(value[i]);

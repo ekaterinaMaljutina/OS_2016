@@ -5,10 +5,21 @@
 struct idt_entry idt[256];
 struct desc_table_ptr descp = {0,0};
 
+char const * error_code_out[32]={"Деление на ноль", //0
+	"прерывание отладки, пошаговое исполнение", //1
+	"Немаскируемое прерывание", // 2
+	"Прерывание точки останова", //3 
+	" Переполнение при выполнении команды Into" //4,
+	"Прерывание выхода за границы данных" // 5 
+	"Прерывание неправильного кода операции", //6
+	"Прерывание отсутствие сопроцессора", //7 
+	" Прерывание двойной ошибки (код ошибки помещается в стек)" //8
+	};
+
+
 void idt_install(){
     descp.size = sizeof (struct idt_entry) * 256 ;
     descp.addr = (uint64_t)idt;
-
     // memset 0
     uint64_t size = descp.size;
 	for (uint64_t i = 0; i < size; i++) {
@@ -30,12 +41,30 @@ void idt_set_gate(unsigned char num,unsigned long base, \
 
 void handler(struct registers_t * reg){
 	if (reg->int_code < 32) {
-		serial_port_write_char("error");
+		//serial_port_write_char("error");
+		serial_port_write_char(error_code_out[reg->int_code]);
 	}
 }
 
 extern void handler0();
+extern void handler1();
+extern void handler2();
+extern void handler3();
+extern void handler4();
+extern void handler5();
+extern void handler6();
+extern void handler7();
+extern void handler8();
+
 
 void intr_install(){
-	idt_set_gate(0, (unsigned long) handler0,  KERNEL_CS, 0x8E);    
+	idt_set_gate(0, (unsigned long) handler0,  KERNEL_CS, 0x8E);
+	idt_set_gate(0, (unsigned long) handler1,  KERNEL_CS, 0x8E);   
+	idt_set_gate(0, (unsigned long) handler2,  KERNEL_CS, 0x8E); 
+	idt_set_gate(0, (unsigned long) handler3,  KERNEL_CS, 0x8E);
+	idt_set_gate(0, (unsigned long) handler4,  KERNEL_CS, 0x8E);
+	idt_set_gate(0, (unsigned long) handler5,  KERNEL_CS, 0x8E);
+	idt_set_gate(0, (unsigned long) handler6,  KERNEL_CS, 0x8E);
+	idt_set_gate(0, (unsigned long) handler7,  KERNEL_CS, 0x8E);
+	idt_set_gate(0, (unsigned long) handler8,  KERNEL_CS, 0x8E);
 }
