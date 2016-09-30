@@ -6,24 +6,19 @@ struct idt_entry idt[256];
 struct desc_table_ptr descp;
 
 void idt_install(){
-    descp.size = sizeof (struct idt_entry) * 256 ;
+    descp.size = sizeof (struct idt_entry) * 256 - 1 ;
     descp.addr = (uint64_t)idt;
-    // memset 0
-    uint64_t size = descp.size;
-	for (uint64_t i = 0; i < size; i++) {
-		((char*)idt)[i] = 0;
-	}
+
 	write_idtr(&descp);
 }
 
-void idt_set_gate(uint8_t const idx, uint64_t const base, \
+void idt_set_gate(uint8_t const idx, uint64_t const base, 
 				  uint16_t const sel, uint8_t const flags){ 
     idt[idx].base_lo = (base & 0xFFFF);
     idt[idx].base_hi = (base >> 16) & 0xFFFF;
 	idt[idx].base_64 = (base >> 32) & 0xFFFFFFFF;
     // сегмент селектор   
 	idt[idx].sel = sel; 
-	idt[idx].always0 = 0;     
 	idt[idx].flags = flags; 
 }
 
