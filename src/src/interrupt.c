@@ -1,6 +1,9 @@
 #include "interrupt.h"
 #include "SerialPort.h"
 #include "memory.h"
+#include "ints.h"  // cli and sti
+#include "ioport.h"
+
 
 struct idt_entry idt[256];
 struct desc_table_ptr descp;
@@ -11,6 +14,7 @@ void idt_install(){
 
 	write_idtr(&descp);
 }
+
 
 void idt_set_gate(uint8_t const idx, uint64_t const base, 
 				  uint16_t const sel, uint8_t const flags){ 
@@ -73,8 +77,46 @@ extern void handler45();
 extern void handler46();
 extern void handler47();
 
+void remap(){
+	disable_ints(); 
+	/*
+		Взаимодействие устройств PIC осуществляется через шину 
+		ввода/вывода. В каждом устройстве есть порт команд и 
+		порт данных:
 
-void intr_install(){
+    		-Главное устройство: команда - 0x20, данные - 0x21
+    		-Подчиненное устройство: команда - 0xA0, данные - 0xA1
+
+
+		Master PIC - Command 	0x0020
+		Master PIC - Data 	0x0021
+		Slave PIC - Command 	0x00A0
+		Slave PIC - Data 	0x00A1 
+
+		
+		0x01 - different functions
+		0x02,0x04 - configuration cascade
+		0x11 - init command
+		0x20, 0x28 - mapping
+		0xEE - mask devices 
+	*/
+	 // Remap the irq table.
+	out8(0x20, 0x11);
+	out8(0xA0, 0x11);
+	out8(0x21, 0x20);
+	out8(0xA1, 0x28);
+	out8(0x21, 0x04);
+	out8(0xA1, 0x02);
+	out8(0x21, 0x01);
+	out8(0xA1, 0x01);
+	out8(0x21, 0x0);
+	out8(0xA1, 0x0);
+
+
+	enable_ints();
+}
+
+void intr_install(){ //with irq
 	idt_set_gate(0, (uint64_t) handler0,  KERNEL_CS, 0x8E);
 	idt_set_gate(1, (uint64_t) handler1,  KERNEL_CS, 0x8E);   
 	idt_set_gate(2, (uint64_t) handler2,  KERNEL_CS, 0x8E); 
@@ -109,6 +151,8 @@ void intr_install(){
 	idt_set_gate(31, (uint64_t) handler31,  KERNEL_CS, 0x8E); 
 
 	//irq
+	remap();
+
 	idt_set_gate(32, (uint64_t) handler32,  KERNEL_CS, 0x8E);
 	idt_set_gate(33, (uint64_t) handler33,  KERNEL_CS, 0x8E); 
 	idt_set_gate(34, (uint64_t) handler34,  KERNEL_CS, 0x8E);
@@ -170,4 +214,35 @@ void handler(struct registers_t const * reg){
 		serial_port_write_char("error with code out:   ");
 		serial_port_write_char(error_code_out[reg->int_code]);
 	}
+}
+
+
+typedef void (*handler_irq)(struct registers_t const *);
+handler_irq interrupt_handlers[16];
+
+void irq_set_handler(int n,handler_irq handler)
+{
+    interrupt_handlers[n] = handler;
+}
+
+void irq_handler(struct registers_t const * reg){
+	if (reg->int_code >= 40 ){ 
+	   /* 
+	   		Если к возникновению прерывания причастно 
+			подчиненное устройство
+		*/
+		// Send reset signal to slave.
+		out8(0xA0, 0x20);
+	}	
+    handler_irq  handler = interrupt_handlers[reg->int_code-32];
+    if (handler)
+    {
+        handler(reg);
+    }
+    /*
+	// Посылает сигнал перезагрузки в главное устройство 
+	(а также в подчиненное устройство, если это необходимо)
+
+	*/
+	out8(0x20, 0x20);
 }

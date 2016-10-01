@@ -1,5 +1,6 @@
 .text
 .extern handler
+.extern iqr_handler
 
 handler_stub:
     pushq %rax
@@ -263,7 +264,7 @@ handler_irq:
     pushq %r15
     movq    %rsp, %rdi
     cld
-    call handler
+    call irq_handler # in C code
     popq %r15
     popq %r14
     popq %r13
