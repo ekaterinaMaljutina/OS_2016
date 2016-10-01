@@ -33,6 +33,7 @@ void main(void)
 	interrupt_int(7);
 	interrupt_int(8);
 	interrupt_int(28);
+	interrupt_int(38);
 
 	qemu_gdb_hang();
 
