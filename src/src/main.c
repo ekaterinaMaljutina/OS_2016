@@ -12,6 +12,7 @@ static void qemu_gdb_hang(void)
 #include "ioport.h"
 #include "interrupt.h"
 #include "SerialPort.h"
+#include "pit.h"
 
 
 #define interrupt_int(value)	__asm__ volatile("int %0" : : "n"(value))
@@ -24,16 +25,11 @@ void main(void)
 	idt_install();
 	intr_install();
 	
+	pit_init();
+
 	interrupt_int(0);
-	interrupt_int(1);
-	interrupt_int(2);
-	interrupt_int(3);
-	interrupt_int(4);
-	interrupt_int(5);
-	interrupt_int(7);
-	interrupt_int(8);
-	interrupt_int(28);
-	interrupt_int(38);
+
+	timer(10);
 
 	qemu_gdb_hang();
 
