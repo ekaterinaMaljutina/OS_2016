@@ -98,7 +98,6 @@ void remap(){
 		0x02,0x04 - configuration cascade
 		0x11 - init command
 		0x20, 0x28 - mapping
-		0xEE - mask devices 
 	*/
 	 // Remap the irq table.
 	out8(0x20, 0x11);
@@ -109,8 +108,8 @@ void remap(){
 	out8(0xA1, 0x02);
 	out8(0x21, 0x01);
 	out8(0xA1, 0x01);
-	out8(0x21, 0xFF);
-	out8(0xA1, 0xFF);
+	out8(0x21, 0xEE);
+	out8(0xA1, 0xEE);
 
 
 	enable_ints();
@@ -208,17 +207,12 @@ char const * const error_code_out[32]={
 	};
 
 
-
 void handler(struct registers_t const * reg){
 	if (reg->int_code < 32) {
 		serial_port_write_char("error with code out:   ");
 		serial_port_write_char(error_code_out[reg->int_code]);
 	}
 }
-
-
-typedef void (*handler_irq)(struct registers_t const *);
-handler_irq interrupt_handlers[16];
 
 void irq_set_handler(int n,handler_irq handler)
 {
