@@ -94,18 +94,6 @@ void init_buddy_allocator(){
     printf("... descr %d (%lu bytes) \n",descr_size , descriptors_memory);
 
 //    printf("here \n");
-    uint32_t memory_map_size = get_memory_map_size();
-    int use_piece = 0;
-//    printf("here \n");
-    for (int i=0; i< (int)memory_map_size; i++){
-        if (memory[i].first + descriptors_memory <= memory[i].until){
-            use_piece = i;
-            break;
-        }
-    }
-    if (use_piece == 0)
-        stop_massenge("you wand more memory \n");
-
 //    memory_allocate(descriptors_memory);
 //    printf("here \n");
 
@@ -119,6 +107,9 @@ void init_buddy_allocator(){
 //    memory[use_piece].first += descriptors_memory;
 //    memory_allocate(descriptors_memory);
 
+    uint32_t memory_map_size = get_memory_map_size();
+    for (int i=0; i<LEVEL; i++)
+        list_init(&level_head[i]);
     for (int i=0; i< descr_size;i++){
         descriptors[i].is_free = 0;
         list_init(&descriptors[i].list_node);
@@ -170,13 +161,3 @@ void* allocate_empty_page(int level){
         pointer[i] = 0;
     return (void*) pointer;
 }
-//void allocate(uint64_t addr){
-//    if (addr % SMALL_PAGE_SIZE ==0)
-//        stop_massenge("addr % SMALL_PAGE_SIZE ==0\n");
-//    uint64_t n_description = addr/SMALL_PAGE_SIZE;
-//    if (descr_size < (int)n_description)
-//        stop_massenge("descr_size < n_description \n");
-//    if (descriptors[n_description].is_free)
-//        stop_massenge(" description is not free \n");
-
-//}

@@ -34,19 +34,19 @@ void main(void)
 
     init_memmap();
     init_buddy_allocator();
-//    for (int i = 0; i < 10; i++){
-        //uint8_t *p1 = (uint8_t*) allocate_empty_page(0);
-//        void *p2 = allocate_empty_page(1);
-//        void *p3 = allocate_empty_page(3);
-//        void *p4 = allocate_empty_page(0);
-////        void *p5 = allocate_empty_page(0);
-//        printf("%p %p %p %p %p\n", p1, p2, p3, p4/*, p5*/);
-////        free_page(p5, 0);
-//        free_page(p4, 0);
-//        free_page(p3, 3);
-//        free_page(p2, 1);
-//        free_page(p1, 0);
-//    }
+    for (int i = 0; i < 10; i++){
+        void *p1 = allocate_empty_page(0);
+        void *p2 = allocate_empty_page(1);
+        void *p3 = allocate_empty_page(3);
+        void *p4 = allocate_empty_page(0);
+        void *p5 = allocate_empty_page(0);
+        printf("%p %p %p %p %p\n", p1,p2,p3, p4 ,  p5);
+        free_page(p5, 0);
+        free_page(p4, 0);
+        free_page(p3, 3);
+        free_page(p2, 1);
+        free_page(p1, 0);
+    }
 
 	qemu_gdb_hang();
 
