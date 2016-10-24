@@ -31,7 +31,8 @@ void main(void)
 
 	interrupt_int(0);
 //	timer(10);
-
+	qemu_gdb_hang();
+	
     init_memmap();
     /*init_buddy_allocator();
     for (int i = 0; i < 10; i++){
@@ -48,7 +49,6 @@ void main(void)
         free_page(p1, 0);
     }*/
 
-	qemu_gdb_hang();
 
 	while (1);
 }

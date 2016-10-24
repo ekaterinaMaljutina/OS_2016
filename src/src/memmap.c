@@ -22,9 +22,10 @@ void add(free_memory memory[], int* free,
 
 void print_free_memory(int free, free_memory memory[]){
     printf("  free : \n");
-    for (uint8_t i =0; i<free; i++)
+    for (uint8_t i =0; i<free; i++){
         printf("%x :  0x%lx  -  0x%lx, len = 0x%lx\n",i, memory[i].first,
                memory[i].until,memory[i].len);
+    }
 }
 
 extern uint32_t multiboot_info;
@@ -56,7 +57,7 @@ void space(multiboot_memory_map_t* memmap, int *free, free_memory* memory){
         if (u_space < memmap->addr + memmap->len)
             add(memory,free,u_space,memmap->addr + memmap->len);
     } else
-        add(memory,free,f_space,u_space);
+        add(memory,free,memmap->addr,memmap->addr + memmap->len);
 
 }
 
