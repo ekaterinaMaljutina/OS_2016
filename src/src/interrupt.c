@@ -211,6 +211,8 @@ void handler(struct registers_t const * reg){
 	if (reg->int_code < 32) {
 		serial_port_write_char("error with code out:   ");
 		serial_port_write_char(error_code_out[reg->int_code]);
+		int i=1;
+		while(i);
 	}
 }
 

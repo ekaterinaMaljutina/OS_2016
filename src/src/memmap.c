@@ -9,6 +9,7 @@
 
 free_memory memory[32];
 int free = 0;
+uint64_t phys_mem_end;
 
 void add(free_memory memory[], int* free,
          uint64_t first, uint64_t until){
@@ -97,17 +98,19 @@ void init_memmap(){
         if (memmap->type == 1)
             space(memmap,&free,memory);
     }
+    phys_mem_end = memory[free].until;
 
     print_free_memory(free,memory);
 }
 
 uint64_t memory_allocate(uint64_t size){
     for (int i=0; i< free; i++){
-        free_memory* memory_ = &memory[i];
-        if (memory_->len >= size){
-            memory_->len -= size;
-            add(memory,&i,memory_->first + memory_->len,size);
-            return memory_->first + memory_->len;
+        // free_memory* memory_ = &memory[i];
+        if (memory[i].len >= size){
+            memory[i].len -= size;
+            memory[i].until -= size;
+            //add(memory,&i,memory_->first + memory_->len,size);
+            return memory[i].until;
         }
     }
     return 0;

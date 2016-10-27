@@ -6,18 +6,19 @@
 
 #include "list.h"
 
-struct buddy_allocator_descriptor
-{
-    uint8_t level;
-    uint8_t is_free;
-    list_ list_node;
-};
-typedef struct buddy_allocator_descriptor buddy_allocator;
-buddy_allocator *descriptors;
 
-void  init_buddy_allocator();
-void* allocate_empty_page(int level);
-void* allocating_page(int level);
-void free_page(void *address, int level);
+typedef uint64_t u64;
+typedef struct alloc_descriptor alloc_t;
+
+struct alloc_descriptor {
+    u64 head;
+    u64 num_pages;
+    node * lists[50];
+    node * save;
+};
+
+void buddy_init();
+u64 do_alloc( u64 );
+void do_free( u64 );
 
 #endif // BUDDY_ALLOCATOR_H

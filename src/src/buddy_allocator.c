@@ -1,163 +1,146 @@
 #include "buddy_allocator.h"
 #include "memmap.h"
-
-
+#include "list.h"
 #include "printf.h"
-
-#define LEVEL 20
-
-
-#define SMALL_PAGE_SIZE  (1<<12)
-#define BASE	0xffffffff80000000
-#define VA(x)                ((x) + BASE)
-#define PA(x)                ((x) - BASE)
-
-int descr_size;
-
-list_* level_head;
-
-int get_buddy(int id, int level){
-    return id ^ (1 << level);
-}
-
-void* align(void* pointer, uint64_t alignment){
-    uint64_t value = (uint64_t) pointer;
-    if (value % alignment)
-        value = value / alignment * alignment + alignment;
-    return (void*) value;
-}
-
-uint64_t div_up(uint64_t a, uint64_t b){
-    if (a % b)
-        return a / b + 1;
-    return a / b;
-}
-static inline uintptr_t pa(const void *addr){
-    return PA((uintptr_t)addr);
-}
-static inline void *va(uintptr_t addr){
-    return (void *)VA(addr);
-}
-
-void *address;
-
-void bootstrap_init(uint64_t size){
-    address = va(memory_allocate(size));
-}
-
-void* bootstrap_allocate(uint64_t size){
-    void *old_address = address;
-    address = (void*) ((uint8_t*) address + size);
-    return old_address;
-}
-
-void* bootstrap_allocate_with_alignment(uint64_t size, uint64_t alignment){
-    address = align(address, alignment);
-    return bootstrap_allocate(size);
-}
+#include "base.h"
 
 
-void free_page(void *address, int level){
-    int id = pa(address) / SMALL_PAGE_SIZE;
-    for (int current_level = level; current_level < LEVEL; current_level++)
-    {
-        int buddy_id = get_buddy(id, current_level);
-        if (buddy_id >= descr_size || !descriptors[buddy_id].is_free
-                || (int) descriptors[buddy_id].level != current_level)
-        {
-            list_add_tail(&descriptors[id].list_node,
-                          &level_head[current_level]);
-            descriptors[id].is_free = 1;
-            descriptors[id].level = current_level;
-            break;
-        }
-        else
-        {
-            list_del(&descriptors[buddy_id].list_node);
-            id = MIN(id, buddy_id);
+alloc_t descriptors[7];
+u64 size_alloc_memory = 0;
+
+void init_helper(alloc_t *buddy) {
+    buddy->num_pages = buddy->num_pages * PAGE_SIZE / (sizeof(node) + PAGE_SIZE);
+    buddy->save = (node *) buddy->head;
+
+    for (int64_t or = MAXIMUM_OR, offset = 0; or > -1; --or) {
+        if (buddy->num_pages & get_buddy(or)) {
+
+            create_node_list(&buddy->save[offset], or, false, NULL, NULL);
+            buddy->lists[or] = &buddy->save[offset];
+            offset += get_buddy(or);
+        } else {
+            buddy->lists[or] = NULL;
         }
     }
+
+    buddy->head = align_up(buddy->head + buddy->num_pages * sizeof(struct d_linked_list));
+    // printf(" buddy_allocator first %lx\n \n",p->head );
 }
 
-void add_page(int id){
-    free_page(va(id * SMALL_PAGE_SIZE), 0);
-}
 
+void buddy_init(){
+    u64 count_pages = 0;
+    u64 size_memory = get_memory_map_size();
+    for (u64 i = 0; i < size_memory; ++i) {
 
-void init_buddy_allocator(){
-    printf("Initial buddy : \n");
-    uint64_t size_memory = get_size_memory();
-    descr_size = size_memory / SMALL_PAGE_SIZE;
+        free_memory *memory_ = &memory[i];
+        // printf(" mmap_memory__t %llx %llx %llx \n",memory_->first, memory_->len, memory_->until );
 
-    uint64_t descriptors_memory = descr_size *
-            (uint64_t)sizeof(buddy_allocator);
-    printf("... descr %d (%lu bytes) \n",descr_size , descriptors_memory);
+        alloc_t *new_buddy = &descriptors[size_alloc_memory++];
+        // printf("\n physical address: %llx \n", align_up(memory_->first + !memory_->first) );
 
-//    printf("here \n");
-//    memory_allocate(descriptors_memory);
-//    printf("here \n");
+        new_buddy->head = va(align_up(memory_->first + !memory_->first));
+        // printf("new_buddy head %llx \n", new_buddy->head );
 
-    uint64_t level_head_memory = LEVEL * sizeof(list_);
+        u64 buddy_end = va(align_down(memory_->until));
+        
+        if (new_buddy->head >= buddy_end) {
+            --size_alloc_memory;
+            continue;
+        }
+        new_buddy->num_pages = (buddy_end - new_buddy->head) / PAGE_SIZE;
 
-    bootstrap_init(level_head_memory + descriptors_memory);
-
-    descriptors = (buddy_allocator*)bootstrap_allocate(descriptors_memory);
-    level_head = (list_*)(uint64_t*)bootstrap_allocate(
-                (uint64_t)level_head_memory);
-//    memory[use_piece].first += descriptors_memory;
-//    memory_allocate(descriptors_memory);
-
-    uint32_t memory_map_size = get_memory_map_size();
-    for (int i=0; i<LEVEL; i++)
-        list_init(&level_head[i]);
-    for (int i=0; i< descr_size;i++){
-        descriptors[i].is_free = 0;
-        list_init(&descriptors[i].list_node);
+        init_helper(new_buddy);
+        count_pages += new_buddy->num_pages;
     }
-    for (int i = 0; i<(int) memory_map_size ; i++){
-        uint64_t left_bound = memory[i].first;
-        if (left_bound % SMALL_PAGE_SIZE)
-            left_bound = left_bound / SMALL_PAGE_SIZE * SMALL_PAGE_SIZE
-                    + SMALL_PAGE_SIZE;
-        for (; left_bound + SMALL_PAGE_SIZE <= memory[i].first +
-             memory[i].len; left_bound += SMALL_PAGE_SIZE)
-        {
-            descriptors[left_bound / SMALL_PAGE_SIZE].is_free = 1;
-            add_page(left_bound / SMALL_PAGE_SIZE);
+    printf("%d pages use\n", count_pages);
+}
+
+
+
+u64 alloc_helper(alloc_t *buddy, u64 or, u64 len) {
+    if (or > MAXIMUM_OR) 
+        return 0;
+
+
+    u64 current_len = get_buddy(or);
+    if (current_len < len || buddy->lists[or] == NULL) 
+        return alloc_helper(buddy, or + 1, len);
+
+
+    u64 current = buddy->lists[or] - buddy->save;
+    pop_front(&buddy->lists[or]);
+    if (current_len >= 2 * len) {
+        create_node_list_and_push(&buddy->save[(u64)(current ^ get_buddy(or-1))], or - 1, false, NULL, NULL,&buddy->lists[or - 1]);
+        create_node_list_and_push(&buddy->save[current], or - 1, false, NULL, NULL,&buddy->lists[or - 1]);
+
+        return alloc_helper(buddy, or - 1, len);
+    }
+
+    create_node_list(&buddy->save[current], or, true, NULL, NULL);
+    return (u64)(buddy->head + PAGE_SIZE * current);
+}
+
+
+u64 do_alloc(u64 len){
+
+   for (u64 i = 0; i < size_alloc_memory; ++i) {
+
+        alloc_t *buddy_allocator_ = &descriptors[i];
+
+        u64 res = alloc_helper(buddy_allocator_, 0, len);
+        if (res) 
+            return res;
+    }
+    return 0; 
+}
+
+
+static void free_herlerp(alloc_t *buddy, u64 current) {
+    if (!buddy->save[current].use) {
+        printf("address free!\n");
+        return;
+    }
+    u64 or = buddy->save[current].or;
+    u64 current_buddy = current ^ get_buddy(or);
+
+    if (!buddy->save[current_buddy].use && buddy->save[current_buddy].or == or &&
+            current_buddy < buddy->num_pages) {
+
+        if (&buddy->save[current_buddy] == buddy->lists[or]) 
+            pop_front(&buddy->lists[or]);
+        else 
+            pop_back(&buddy->save[current_buddy]);
+
+        ++buddy->save[current].or;
+        if (current_buddy < current) {
+            buddy->save[current].use = false;
+            buddy->save[current_buddy].use = true;
+            current = current_buddy;
+        }
+        free_herlerp(buddy, current);
+        return;
+    }
+    buddy->save[current].use = false;
+    push_front(&buddy->save[current], &buddy->lists[or]);
+    buddy->lists[or] = &buddy->save[current];
+}
+
+
+void do_free(u64 current_len) {
+    if (current_len % PAGE_SIZE) {
+        printf("address not aligned!\n");
+        return;
+    }
+    for (u64 i = 0; i < size_alloc_memory; ++i) {
+        alloc_t * buddy_allocator_ = &descriptors[i];
+        if ( buddy_allocator_->head <= current_len &&
+            current_len <  buddy_allocator_->head +  buddy_allocator_->num_pages * PAGE_SIZE) {
+
+            u64 size = (current_len -  buddy_allocator_->head) / PAGE_SIZE;
+            free_herlerp( buddy_allocator_, size);
+
+            return;
         }
     }
-    printf("finish! \n");
-}
-
-
-void* allocating_page(int level){
-    for (int current_up_level = level; current_up_level < LEVEL;
-         current_up_level++){
-        if (level_head[current_up_level].next != &level_head[current_up_level]){
-            int id = LIST_ENTRY(level_head[current_up_level].prev,
-                                buddy_allocator, list_node) - descriptors;
-            list_del(level_head[current_up_level].prev);
-            for (int current_down_level = current_up_level - 1;
-                 current_down_level >= level; current_down_level--)
-            {
-                int buddy_id = get_buddy(id, current_down_level);
-                descriptors[buddy_id].is_free = 1;
-                descriptors[buddy_id].level = current_down_level;
-                list_add_tail(&descriptors[buddy_id].list_node,
-                              &level_head[current_down_level]);
-            }
-            descriptors[id].is_free = 0;
-            descriptors[id].level = level;
-            return va(id * (uint64_t) SMALL_PAGE_SIZE);
-            break;
-        }
-    }
-    return 0;
-}
-
-void* allocate_empty_page(int level){
-    uint8_t *pointer = (uint8_t*) allocating_page(level);
-    for (int i = 0; i < SMALL_PAGE_SIZE; i++)
-        pointer[i] = 0;
-    return (void*) pointer;
 }

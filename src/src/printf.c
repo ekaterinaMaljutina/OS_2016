@@ -3,186 +3,251 @@
 
 #define MAXN 70
 
-size_t strlen(const char *s){
-    size_t len = 0;
-    while (*s){
-        len++;
-        s++;
+static char basefor(char symbolic)
+{
+    if (symbolic == 'u')
+    {
+        return 10;
     }
-    return len;
+    if (symbolic == 'o')
+    {
+        return 8;
+    } 
+    if (symbolic == 'x')
+    {
+        return 16;
+    }
+    return 0;
 }
 
-void print_symb(char **buf, char c, size_t *print_length, size_t n){
-    (*print_length)++;
-    if ((*buf) != NULL && *print_length == n)
-        return;
-    if (*buf == NULL)
-        serial_port_write(c);
+static void print_char(char buffered, char* buffer, size_t buf_size, size_t* ps, char c)
+{
+    (*ps)++;
+    if (buffered){
+        if (*ps + 1 >= buf_size) 
+        {
+            return;
+        }  
+        buffer[*ps] = c;
+    } 
     else
-        *(*buf)++ = c;
-}
-
-int printf(const char *format, ...){
-    va_list args;
-    va_start(args, format);
-    int result = vprintf(format, args);
-    va_end(args);
-    return result;
-}
-
-int vprintf(const char *format, va_list args){
-    return vsnprintf(NULL, 0, format, args);
-}
-
-int snprintf(char *s, size_t n, const char *format, ...){
-    va_list args;
-    va_start(args, format);
-    int result = vsnprintf(s, n, format, args);
-    va_end(args);
-    return result;
-}
-
-void print_sign_and_null(char **buf, long long *x, size_t *print_length,
-                         size_t n){
-    if (*x < 0){
-        print_symb(buf, '-', print_length, n);
-        *x *= -1;
+    {
+        serial_port_write(c);
     }
-    if (*x == 0)
-        print_symb(buf, '0', print_length, n);
 }
 
-void print_dec_unsigned(char **buf, unsigned long long x,
-                        size_t *print_length, int base, size_t need_length,
-                        size_t n){
-    char buffer[MAXN];
-    int pos = 0;
-    if (x == 0)
-        print_symb(buf, '0', print_length, n);
-    while (x > 0) {
-        int digit = x % base;
-        if (digit < 10)
-            buffer[pos++] = '0' + digit;
-        else
-            buffer[pos++] = 'a' + digit - 10;
-        x /= base;
+static void print_uint(char buffered, char* buffer, size_t buf_size, size_t* ps, 
+                       uint64_t x, char base)
+{
+    char a[100];
+    int i = 0;
+    while (x > 0)
+    {
+        a[i++] = x % base;
+        // printf("here %s \n",base);
+        x /= base;   
     }
-    while (pos < (int) need_length)
-        buffer[pos++] = '0';
-    for (int i = pos - 1; i >= 0; i--)
-        print_symb(buf, buffer[i], print_length, n);
-}
-
-void print_number(char **buf, long long x,
-                  size_t *print_length, int base, size_t need_length, size_t n){
-    char buffer[MAXN];
-    int pos = 0;
-    print_sign_and_null(buf, &x, print_length, n);
-    while (x > 0){
-        int digit = x % base;
-        if (digit < 10)
-            buffer[pos++] = '0' + digit;
-        else
-            buffer[pos++] = 'a' + digit - 10;
-        x /= base;
+    if (i == 0)
+    {
+        a[i++] = 0;
     }
-    while (pos < (int) need_length)
-        buffer[pos++] = '0';
-    for (int i = pos - 1; i >= 0; i--)
-        print_symb(buf, buffer[i], print_length, n);
-}
-
-int vsnprintf(char *s, size_t n, const char *format, va_list args){
-    size_t print_length = 0;
-    size_t it = 0;
-    size_t len = strlen(format);
-    while (it < len) {
-        if (format[it] == '%'){
-            it++;
-            unsigned long long x = 0;
-            int was = 0;
-            if (format[it] == 'h'){
-                was = 1;
-                it++;
-                if (format[it] == 'h') {
-                    it++;
-                    x = (char) va_arg(args, int);
-                }
-                else
-                    x = (short) va_arg(args, int);
-            }
-            else{
-                if (format[it] == 'l'){
-                    was = 1;
-                    it++;
-                    if (format[it] == 'l'){
-                        it++;
-                        x = va_arg(args, long long);
-                    }
-                    else
-                        x = va_arg(args, long);
-                }
-                else if (format[it] == 'z') {
-                    was = 1;
-                    it++;
-                    x = va_arg(args, size_t);
-                }
-            }
-            if (format[it] == 's') {
-                it++;
-                was = 1;
-                char *t = va_arg(args, char*);
-                int len = strlen(t);
-                for (int i = 0; i < len; i++)
-                    print_symb(&s, t[i], &print_length, n);
-                continue;
-            }
-            if (format[it] == 'p')  {
-                it++;
-                was = 1;
-                uint64_t p = (uint64_t) va_arg(args, void*);
-                print_dec_unsigned(&s, p, &print_length, 16, 16, n);
-                continue;
-            }
-            if (format[it] == 'u'){
-                it++;
-                if (was)
-                    print_dec_unsigned(&s, x, &print_length, 10, 0, n);
-                else {
-                    was = 1;
-                    unsigned int p = va_arg(args, unsigned int);
-                    print_dec_unsigned(&s, p, &print_length, 10, 0, n);
-                }
-                continue;
-            }
-            if (!was)
-                x = va_arg(args, int);
-            if (format[it] == 'd' || format[it] == 'i'){
-                it++;
-                print_number(&s, x, &print_length, 10, 0, n);
-                continue;
-            }
-            if (format[it] == 'x') {
-                it++;
-                print_number(&s, x, &print_length, 16, 0, n);
-                continue;
-            }
-            if (format[it] == 'o') {
-                it++;
-                print_number(&s, x, &print_length, 8, 0, n);
-                continue;
-            }
-            if (format[it] == 'c'){
-                it++;
-                print_symb(&s, x, &print_length, n);
-                continue;
-            }
+    do
+    {
+        i--;
+        if (a[i] < 10)
+        {
+            print_char(buffered, buffer, buf_size, ps, '0' + a[i]);
         }
-        else {
-            print_symb(&s, format[it], &print_length, n);
-            it++;
+        else
+        {
+            print_char(buffered, buffer, buf_size, ps, 'a' + a[i] - 10);
         }
-    }
-    return print_length;
+    } while (i > 0);
 }
 
+static void print_int(char buffered, char* buffer, size_t buf_size, size_t* ps,
+                      int64_t x, char base)
+{
+    if (x < 0)
+    {
+        print_char(buffered, buffer, buf_size, ps, '-');
+        x = -x;
+    }
+    print_uint(buffered, buffer, buf_size, ps, (uint64_t)x, base);
+}
+
+static int generic_printf(char buffered, char* buffer, size_t buf_size, 
+                          const char* fmt, va_list args)
+{
+    size_t ps = 0;
+    for (const char* p = fmt; *p != 0; p++)
+    {
+        if (*p != '%')
+        {
+            print_char(buffered, buffer, buf_size, &ps, *p);
+            continue;   
+        }
+
+        p++;
+        if (*p == 0)
+        {
+            break;
+        }
+        if (*p == '%')
+        {
+            print_char(buffered, buffer, buf_size, &ps, '%');
+            continue;
+        } 
+        if (*p == 'c')
+        {
+            print_char(buffered, buffer, buf_size, &ps, *p);    
+            continue;
+        }
+        if (*p == 's')
+        {
+            for (char* mes = va_arg(args, char*); *mes != 0; mes++)
+            {
+                print_char(buffered, buffer, buf_size, &ps, *mes);
+            }
+            continue;
+        }
+        if (*p == 'd' || *p == 'i')
+        {
+            int arg = va_arg(args, int);
+            print_int(buffered, buffer, buf_size, &ps, arg, 10);
+            continue;            
+        }
+        if (basefor(*p) != 0)
+        {
+            unsigned int arg = va_arg(args, unsigned int);
+            print_uint(buffered, buffer, buf_size, &ps, arg, basefor(*p));
+            continue;
+        }
+        
+        if (*p == 'h')
+        {
+            p++;
+            if (*p == 0)
+            {
+                break;
+            }
+            if (*p == 'd' || *p == 'i')
+            {
+                short arg = (short) va_arg(args, int);
+                print_int(buffered, buffer, buf_size, &ps, arg, 10);
+                continue;
+            }
+            if (basefor(*p) != 0)
+            {
+                unsigned short arg = (unsigned short) va_arg(args, unsigned int);
+                print_uint(buffered, buffer, buf_size, &ps, arg, basefor(*p));
+                continue;
+            }   
+            
+            if (*p == 'h')
+            {
+                p++;
+                if (*p == 0)
+                {
+                    break;
+                }
+                if (*p == 'd' || *p == 'i')
+                {
+                    signed char arg = (signed char) va_arg(args, signed int);
+                    print_int(buffered, buffer, buf_size, &ps, arg, 10);
+                    continue;
+                }
+                if (basefor(*p) != 0)
+                {
+                    unsigned char arg = (unsigned char) va_arg(args, unsigned int);
+                    print_uint(buffered, buffer, buf_size, &ps, arg, basefor(*p));
+                    continue;
+                }   
+            }   
+            
+            continue;
+        }
+    
+        if (*p == 'l')
+        {
+            p++;
+            if (*p == 0)
+            {
+                break;
+            }
+            if (*p == 'd' || *p == 'i')
+            {
+                long arg = va_arg(args, long);
+                print_int(buffered, buffer, buf_size, &ps, arg, basefor(*p));
+                continue;
+            }
+            if (basefor(*p) != 0)
+            {
+                unsigned long arg = va_arg(args, unsigned long);
+                print_uint(buffered, buffer, buf_size, &ps, arg, basefor(*p));
+                continue;
+            }
+            
+            if (*p == 'l')
+            {
+                p++;
+                if (*p == 0)
+                {
+                    break;
+                }
+                if (*p == 'd' || *p == 'i')
+                {
+                    long long arg = va_arg(args, long long);
+                    print_int(buffered, buffer, buf_size, &ps, arg, basefor(*p));
+                    continue;
+                }
+                if (basefor(*p) != 0)
+                {
+                    unsigned long long arg = va_arg(args, unsigned long long);
+                    print_uint(buffered, buffer, buf_size, &ps, arg, basefor(*p));
+                    continue;
+                }
+            }
+
+            continue;
+        }
+    }
+ 
+    if (buffered)
+    {
+        buffer[ps] = 0;
+    }
+    return (int)ps;
+}
+
+int vprintf(const char* fmt, va_list args)
+{
+    return generic_printf(0, 0, 0, fmt, args);
+}
+
+int vsnprintf(char* buffer, size_t buf_size, const char* fmt, va_list args)
+{
+    return generic_printf(1, buffer, buf_size, fmt, args);
+}
+
+int printf(const char* fmt, ...)
+{
+    va_list args;
+
+    va_start(args, fmt);
+    int printed = vprintf(fmt, args);
+    va_end(args);
+
+    return printed;
+}
+
+int snprintf(char* buffer, size_t buf_size, const char* fmt, ...)
+{
+    va_list args;
+
+    va_start(args, fmt);
+    int printed = vsnprintf(buffer, buf_size, fmt, args);
+    va_end(args);
+
+    return printed;
+}
