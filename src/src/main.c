@@ -47,7 +47,7 @@ void main(void)
     }
     printf("OK ... \n");
 
-    create_slab(sizeof(int) * 10, 2);
+    //create_slab(sizeof(int) * 10, 2);
 
 
 	while (1);
