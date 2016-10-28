@@ -105,11 +105,10 @@ void init_memmap(){
 
 uint64_t memory_allocate(uint64_t size){
     for (int i=0; i< free; i++){
-        // free_memory* memory_ = &memory[i];
+
         if (memory[i].len >= size){
             memory[i].len -= size;
             memory[i].until -= size;
-            //add(memory,&i,memory_->first + memory_->len,size);
             return memory[i].until;
         }
     }

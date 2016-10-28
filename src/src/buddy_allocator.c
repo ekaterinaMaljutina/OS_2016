@@ -31,11 +31,19 @@ void init_helper(alloc_t *buddy) {
 void buddy_init(){
     u64 count_pages = 0;
     u64 size_memory = get_memory_map_size();
+
+    // u64 size = get_size_memory();
+    // u64 total_pages = size / PAGE_SIZE;
+
     for (u64 i = 0; i < size_memory; ++i) {
 
         free_memory *memory_ = &memory[i];
         // printf(" mmap_memory__t %llx %llx %llx \n",memory_->first, memory_->len, memory_->until );
-
+        if (memory_->until > (1LL << 32)){
+            printf("this memory_ after 4Gb 0x%llx - 0x%llx \n", memory_->first, memory_->until);
+            memory_->until = (1LL << 32) - 1LL;
+            printf(" allocate only this part 0x%llx - 0x%llx \n", memory_->first, memory_->until);
+        }
         alloc_t *new_buddy = &descriptors[size_alloc_memory++];
         // printf("\n physical address: %llx \n", align_up(memory_->first + !memory_->first) );
 
@@ -52,6 +60,7 @@ void buddy_init(){
 
         init_helper(new_buddy);
         count_pages += new_buddy->num_pages;
+        
     }
     printf("%d pages use\n", count_pages);
 }
@@ -96,7 +105,7 @@ u64 do_alloc(u64 len){
 }
 
 
-static void free_herlerp(alloc_t *buddy, u64 current) {
+static void free_herler(alloc_t *buddy, u64 current) {
     if (!buddy->save[current].use) {
         printf("address free!\n");
         return;
@@ -118,7 +127,7 @@ static void free_herlerp(alloc_t *buddy, u64 current) {
             buddy->save[current_buddy].use = true;
             current = current_buddy;
         }
-        free_herlerp(buddy, current);
+        free_herler(buddy, current);
         return;
     }
     buddy->save[current].use = false;
@@ -138,7 +147,7 @@ void do_free(u64 current_len) {
             current_len <  buddy_allocator_->head +  buddy_allocator_->num_pages * PAGE_SIZE) {
 
             u64 size = (current_len -  buddy_allocator_->head) / PAGE_SIZE;
-            free_herlerp( buddy_allocator_, size);
+            free_herler( buddy_allocator_, size);
 
             return;
         }

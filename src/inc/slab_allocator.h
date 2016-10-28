@@ -10,8 +10,7 @@ typedef struct slab_allocator slab_t;
 typedef struct slab_node slab_node_t;
 
 struct slab_allocator {
-	uint64_t* memory;
-	uint64_t* head;
+	uint64_t memory_begin;
 
 	uint8_t free_space;
 	slab_t* next;
