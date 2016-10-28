@@ -15,6 +15,9 @@ struct memory{
 typedef struct memory free_memory;
 
 extern free_memory memory[32];
+extern int free;
+extern uint64_t phys_mem_end;
+
 
 void init_memmap();
 

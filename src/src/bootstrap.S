@@ -244,6 +244,7 @@ start64:
 	.align PAGE_SIZE
 	.space PAGE_SIZE
 bootstrap_stack_top:
+	.global bootstrap_pml4
 	.align PAGE_SIZE
 bootstrap_pml4:
 	.space PAGE_SIZE

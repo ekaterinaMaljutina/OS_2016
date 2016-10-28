@@ -16,6 +16,8 @@ static void qemu_gdb_hang(void)
 #include "memmap.h"
 #include "buddy_allocator.h"
 #include "printf.h"
+#include "paging.h"
+
 #include "slab_allocator.h"
 
 
@@ -36,6 +38,9 @@ void main(void)
 	qemu_gdb_hang();
 	
     init_memmap();
+
+    init_paging();
+    
     buddy_init();
 
     for (int i=0 ; i<10; i++){

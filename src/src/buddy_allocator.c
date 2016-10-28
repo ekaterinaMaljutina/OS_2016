@@ -39,11 +39,11 @@ void buddy_init(){
 
         free_memory *memory_ = &memory[i];
         // printf(" mmap_memory__t %llx %llx %llx \n",memory_->first, memory_->len, memory_->until );
-        if (memory_->until > (1LL << 32)){
-            printf("this memory_ after 4Gb 0x%llx - 0x%llx \n", memory_->first, memory_->until);
-            memory_->until = (1LL << 32) - 1LL;
-            printf(" allocate only this part 0x%llx - 0x%llx \n", memory_->first, memory_->until);
-        }
+        // if (memory_->until > (1LL << 32)){
+        //     printf("this memory_ after 4Gb 0x%llx - 0x%llx \n", memory_->first, memory_->until);
+        //     memory_->until = (1LL << 32) - 1LL;
+        //     printf(" allocate only this part 0x%llx - 0x%llx \n", memory_->first, memory_->until);
+        // }
         alloc_t *new_buddy = &descriptors[size_alloc_memory++];
         // printf("\n physical address: %llx \n", align_up(memory_->first + !memory_->first) );
 

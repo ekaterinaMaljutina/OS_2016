@@ -98,9 +98,9 @@ void init_memmap(){
         if (memmap->type == 1)
             space(memmap,&free,memory);
     }
-    phys_mem_end = memory[free].until;
-
+    phys_mem_end = memory[free-1].until;
     print_free_memory(free,memory);
+    printf("\n phys_mem_end %llx \n",phys_mem_end );
 }
 
 uint64_t memory_allocate(uint64_t size){
