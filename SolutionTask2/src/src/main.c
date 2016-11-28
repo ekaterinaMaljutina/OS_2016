@@ -140,13 +140,10 @@ static void test_buddy(void)
 }
 
 
-struct spinlock locked;
 
 void main(void *bootstrap_info)
 {
 	qemu_gdb_hang();
-
-	lock(&locked);
 	serial_setup();
 	ints_setup();
 	time_setup();
@@ -156,7 +153,6 @@ void main(void *bootstrap_info)
 	mem_alloc_setup();
 	kmap_setup();
 	enable_ints();
-	unlock(&locked);
 
 
 	printf("Tests Begin\n");
