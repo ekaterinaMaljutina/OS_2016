@@ -12,6 +12,7 @@
 
 
 static struct spinlock locked;
+static struct spinlock locked_buddy;
 
 struct list_head page_alloc_zones;
 
@@ -238,13 +239,17 @@ void page_alloc_setup(void)
 
 static struct page *page_alloc_zone(struct page_alloc_zone *zone, int order)
 {
+	lock(&locked_buddy);
+
 	int current = order;
 
 	while (list_empty(&zone->order[current]) && current <= MAX_ORDER)
 		++current;
 
-	if (current > MAX_ORDER)
+	if (current > MAX_ORDER){
+		unlock(&locked_buddy);
 		return 0;
+	}
 
 	BUG_ON(list_empty(&zone->order[current]));
 
@@ -264,7 +269,7 @@ static struct page *page_alloc_zone(struct page_alloc_zone *zone, int order)
 		page_set_order(buddy, current);
 		page_set_free(buddy);
 	}
-
+	unlock(&locked_buddy);
 	return page;
 }
 
