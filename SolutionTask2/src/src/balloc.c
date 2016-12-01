@@ -275,9 +275,7 @@ uintptr_t balloc_memory(void)
 
 void balloc_setup(const struct mboot_info *info)
 {
-	lock(&locked);
 	balloc_setup_nodes();
 	balloc_parse_mmap(info);
 	balloc_dump_ranges();
-	unlock(&locked);
 }

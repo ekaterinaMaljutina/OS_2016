@@ -204,7 +204,6 @@ static void page_alloc_zone_dump(const struct page_alloc_zone *zone)
 
 void page_alloc_setup(void)
 {
-	lock(&locked);
 	struct rb_node *ptr = rb_leftmost(&memory_map);
 
 	list_init(&page_alloc_zones);
@@ -233,7 +232,6 @@ void page_alloc_setup(void)
 
 		page_alloc_zone_dump(zone);
 	}
-	unlock(&locked);
 }
 
 static struct page *page_alloc_zone(struct page_alloc_zone *zone, int order)
