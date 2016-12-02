@@ -10,6 +10,8 @@
 
 #include "lock.h"
 
+#include "threads.h"
+
 static void qemu_gdb_hang(void)
 {
 #ifdef DEBUG
@@ -119,6 +121,7 @@ static void test_buddy(void)
 	list_init(&head);
 	int i = 0;
 	while (i<100) {
+	// while(1){
 		struct page *page = __page_alloc(0);
 
 		if (!page)
@@ -139,20 +142,89 @@ static void test_buddy(void)
 	}
 }
 
+int use[(1 << 16)];
 
+int value = 0;
+
+void lock_1(void *arg) {
+	int current = *(int*)arg;
+
+	printf("lock1 current = %d\n",current );
+
+	use[current] = 1;
+	printf("%d %d\n", use[1], use[2]);
+
+    printf("functon 1: %d; value = %d\n", current, value);
+
+    use[current] = 2;
+    printf("%d %d\n", use[1], use[2]);
+    value = 1;
+
+    printf("functon 1: %d; value =  %d\n",current, value);
+
+}
+
+
+void lock_2(void *arg) {
+	int current = *(int*)arg;
+	printf("lock2 current = %d\n",current );
+    use[current] = 1;
+    printf("%d %d\n", use[1], use[2]);
+    use[current] = 2;
+
+    printf("%d %d\n", use[1], use[2]);
+
+    printf("functon 2: %d; value = %d  \n",current, value);
+
+    value = 2;
+
+    printf("functon 2:  %d; value =  %d\n",current, value);
+}
+
+
+
+void test_thread(){
+
+	printf("create thread \n");
+
+	int n1 = 1;
+	int n2 = 2;
+
+    use[n1] = 0;
+    use[n2] = 0;
+	thread_t *t1 = thread_create(lock_1, &n1);
+    thread_t *t2 = thread_create(lock_2, &n2);
+
+
+    printf(" thread created ... ok \n");
+
+    printf("run join\n");
+    thread_join(t1);
+	thread_join(t2);
+	printf("Finished join\n");
+
+    printf("%d %d\n", use[1], use[2]);
+
+    if (use[n1] == 2 && use[n2] == 2)
+    	printf("OK\n");
+    else
+    	printf(" WRONG!!!\n");
+
+    printf("return to main thread\n");
+}
 
 void main(void *bootstrap_info)
 {
 	qemu_gdb_hang();
 	serial_setup();
 	ints_setup();
-	time_setup();
+	// time_setup();
 	balloc_setup(bootstrap_info);
 	paging_setup();
 	page_alloc_setup();
 	mem_alloc_setup();
 	kmap_setup();
-	enable_ints();
+	// enable_ints();
 
 
 	printf("Tests Begin\n");
@@ -161,6 +233,15 @@ void main(void *bootstrap_info)
 	test_alloc();
 	test_kmap();
 	printf("Tests Finished\n");
+
+	init_threads();
+	time_setup();
+	
+
+	printf("test_thread .. \n");
+	test_thread();
+	printf("test_thread .. ok \n");
+
 
 	while (1);
 }
