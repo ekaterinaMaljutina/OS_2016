@@ -242,6 +242,5 @@ void main(void *bootstrap_info)
 	test_thread();
 	printf("test_thread .. ok \n");
 
-
 	while (1);
 }

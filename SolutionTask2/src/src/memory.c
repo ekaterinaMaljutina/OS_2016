@@ -4,14 +4,13 @@
 #include <debug.h>
 
 #include <lock.h>
+#include "threads.h"
 
 #define PAGE_FREE_OFFS	8
 #define PAGE_FREE_MASK	(1ul << PAGE_FREE_OFFS)
 #define PAGE_ORDER_MASK	(PAGE_FREE_MASK - 1)
 #define PAGE_USER_OFFS	16
 
-
-static struct spinlock locked;
 
 struct list_head page_alloc_zones;
 
@@ -268,9 +267,9 @@ static struct page *page_alloc_zone(struct page_alloc_zone *zone, int order)
 
 struct page *__page_alloc(int order)
 {
-	lock(&locked);
+	thread_lock();
 	if (order > MAX_ORDER){
-		unlock(&locked);
+		thread_unlock();
 		return 0;
 	}
 
@@ -283,19 +282,19 @@ struct page *__page_alloc(int order)
 		struct page *page = page_alloc_zone(zone, order);
 
 		if (page){
-			unlock(&locked);
+			thread_unlock();
 			return page;
 		}
 	}
-	unlock(&locked);
+	thread_unlock();
 	return 0;
 }
 
 uintptr_t page_alloc(int order)
 {
-	lock(&locked);
+	thread_lock();
 	if (order > MAX_ORDER){
-		unlock(&locked);
+		thread_unlock();
 		return 0;
 	}
 
@@ -311,10 +310,10 @@ uintptr_t page_alloc(int order)
 			continue;
 
 		const uintptr_t index = zone->begin + (page - zone->pages);
-		unlock(&locked);
+		thread_unlock();
 		return index << PAGE_SHIFT;
 	}
-	unlock(&locked);
+	thread_unlock();
 	return 0;
 }
 
@@ -353,9 +352,9 @@ static void page_free_zone(struct page_alloc_zone *zone, struct page *page,
 
 void page_free(uintptr_t addr, int order)
 {
-	lock(&locked);
+	thread_lock();
 	if (!addr){
-		unlock(&locked);
+		thread_unlock();
 		return;
 	}
 
@@ -367,19 +366,19 @@ void page_free(uintptr_t addr, int order)
 	struct page *page = &zone->pages[idx - zone->begin];
 
 	page_free_zone(zone, page, order);
-	unlock(&locked);
+	thread_unlock();
 }
 
 void __page_free(struct page *page, int order)
 {
-	lock(&locked);
+	thread_lock();
 	if (!page){
-		unlock(&locked);
+		thread_unlock();
 		return;
 	}
 
 	struct page_alloc_zone *zone = page_zone(page);
 
 	page_free_zone(zone, page, order);
-	unlock(&locked);
+	thread_unlock();
 }
