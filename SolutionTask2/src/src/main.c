@@ -12,6 +12,9 @@
 
 #include "threads.h"
 
+#include "file_system.h"
+
+// #define DEBUG
 static void qemu_gdb_hang(void)
 {
 #ifdef DEBUG
@@ -238,9 +241,81 @@ void main(void *bootstrap_info)
 	time_setup();
 	
 
-	printf("test_thread .. \n");
-	test_thread();
-	printf("test_thread .. ok \n");
+	// printf("test_thread .. \n");
+	// test_thread();
+	// printf("test_thread .. ok \n");
+
+
+
+	printf("test file system\n");
+	file_system_init();
+	file_system_print();
+
+	printf("check open file \n");
+	
+	int id = open_file("/file.txt", WRITE);
+	printf("created file with id = %d\n",id );
+	file_system_print();
+
+	int id1 = open_file("/file1.txt", WRITE);
+	printf("created file with id = %d\n",id1 );
+	file_system_print();
+
+	int dir = mkdir("/test_dir");
+	printf("created dir with id = %d\n",dir);
+	file_system_print();
+	// printf("\n\n\n\n");
+	int id2 = open_file("/test_dir/file2.txt", WRITE);
+	printf("created file with id = %d\n",id2 );
+	file_system_print();
+
+	int dir_2 = mkdir("/test_dir_2");
+	printf("created dir with id = %d\n",dir_2);
+	file_system_print();
+
+	int id3 = open_file("/test_dir_2/file3.txt", WRITE);
+	printf("created file with id = %d\n",id3 );
+	file_system_print();
+
+	printf("\n");
+
+	printf("write file \n");
+
+	char val[3] = {'a','b', 'c'};
+	ssize_t bytes = write(id,val,3);
+	printf("write bytes = %d \n", bytes);
+
+	close_file(id);
+    id = open_file("/file.txt", READ);
+
+	char buf[3];
+	ssize_t bytes__ = read(id, buf, 3);
+	printf("readed bytes__ = %d \n", bytes__);
+	for (int i = 0; i < bytes__; ++i) {
+		printf("%c",buf[i] );
+	}
+	printf("\n\n");
+
+	close_file(id);
+    id = open_file("/file.txt", WRITE);
+
+	printf("write new value to file\n");
+	char value[10] = "abcdefaaab";
+	bytes = write(id, value,10);
+	printf("write bytes = %d \n", bytes);
+	
+	close_file(id);
+	id = open_file("/file.txt", READ);
+
+	char buf_new[10];
+	bytes__ = read(id, buf_new, bytes);
+	printf("readed bytes__ = %d \n", bytes__);
+	for (int i = 0; i < bytes__; ++i) {
+		printf("%c",buf_new[i] );
+	}
+	printf("\n\n");
+
+	printf("end of test\n");
 
 	while (1);
 }

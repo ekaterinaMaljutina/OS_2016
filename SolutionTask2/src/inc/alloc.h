@@ -25,6 +25,9 @@ struct mem_cache {
 	size_t mask_words;
 	size_t obj_size;
 	int pool_order;
+
+	// spinlock
+	struct spinlock locked;
 };
 
 void mem_cache_setup(struct mem_cache *cache, size_t size, size_t align);
