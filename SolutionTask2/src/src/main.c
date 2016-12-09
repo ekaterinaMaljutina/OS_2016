@@ -185,7 +185,6 @@ void lock_2(void *arg) {
 }
 
 
-
 void test_thread(){
 
 	printf("create thread \n");

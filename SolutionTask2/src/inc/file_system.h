@@ -19,18 +19,7 @@ struct node {
     struct node* child;
     void* file_start;
     uint8_t is_dir;
-    uint64_t act_size;
 };
-
-struct file_descriptor {
-    struct node* node;
-    uint64_t current_position;
-    int is_free;
-};
-
-struct file_descriptor file_descriptors[MAX_FILE_DIS_COUNT];
-
-typedef struct node* DIR;
 
 void file_system_init();
 void file_system_print();
@@ -43,9 +32,9 @@ ssize_t write(int fd, const void* buf, size_t nbyte);
 
 
 int mkdir(const char *path);
-DIR* opendir(const char * path);
-struct node* readdir(DIR* dirp);
-void closedir(DIR* dir);
+struct node** opendir(const char * path);
+struct node* readdir(struct node** dirp);
+void closedir(struct node* dir);
 
 
 #endif /*__FILE_SYSTEM__*/

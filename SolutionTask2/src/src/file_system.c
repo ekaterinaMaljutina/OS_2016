@@ -5,6 +5,17 @@
 #include "print.h"
 #include "debug.h"
 
+
+#define MAX_FILE_DIS_COUNT 256
+
+struct file_descriptor {
+    struct node* node;
+    uint64_t current_position;
+    int is_free;
+};
+
+struct file_descriptor file_descriptors[MAX_FILE_DIS_COUNT];
+
 static struct node *root;
 
 void file_system_init() {
@@ -59,10 +70,10 @@ static struct node* create_new(char const *name, int flag){
 
 }
 
-static DIR* __opendir(struct node *node){
+static struct node** __opendir(struct node *node){
 	if (node == NULL || !node->is_dir )
 		return NULL;
-	DIR* res = mem_alloc(sizeof(DIR));
+	struct node** res = mem_alloc(sizeof(struct node*));
 	*res = node->child;
 	return res;
 }
@@ -75,7 +86,7 @@ static void __print(struct node* node, int v){
 	printf("%s", node->name);
 	if (node->is_dir){
 		printf("/\n");
-		DIR *dir = __opendir(node);
+		struct node **dir = __opendir(node);
 
 		struct node* val = readdir(dir);
 		while(val != NULL){
@@ -195,8 +206,10 @@ int close_file(int fd){
 
 ssize_t read(int fd, void* buf, size_t nbyte){
 	thread_lock();
-	if (!check_idx(fd))
+	if (!check_idx(fd)){
+		thread_unlock();
 		return -1;
+	}
 
 	struct node* node = file_descriptors[fd].node;
 	size_t i = 0;
@@ -210,8 +223,10 @@ ssize_t read(int fd, void* buf, size_t nbyte){
 }
 ssize_t write(int fd, void const *buf, size_t nbyte){
 	thread_lock();
-	if (!check_idx(fd))
+	if (!check_idx(fd)){
+		thread_unlock();
 		return -1;
+	}
 
 	struct node* node = file_descriptors[fd].node;
 	size_t i = 0;
@@ -239,14 +254,14 @@ int mkdir(char const *path){
 		return 0;
 }
 
-DIR* opendir(char const * path){
+struct node** opendir(char const * path){
 	thread_lock();
 	struct node* node = find_or_create(path, NULL,OPEN);
-	DIR* dir = __opendir(node);
+	struct node** dir = __opendir(node);
 	thread_unlock();
 	return dir;
 }
-struct node* readdir(DIR* dirp){
+struct node* readdir(struct node** dirp){
 	thread_lock();
 	struct node* dir = *dirp;
 	if (dir == NULL){
@@ -257,6 +272,6 @@ struct node* readdir(DIR* dirp){
 	thread_unlock();
 	return dir;
 }
-void closedir(DIR* dir){
+void closedir(struct node* dir){
 	mem_free(dir);
 }
