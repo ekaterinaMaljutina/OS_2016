@@ -249,11 +249,16 @@ ssize_t write(int fd, void const *buf, size_t nbyte){
 
 
 int mkdir(char const *path){
+	thread_lock();
 	struct node* node = find_or_create(path, create_new, MKDIR);
-	if (node == NULL)
+	if (node == NULL){
+		thread_unlock();
 		return -1;
-	else 
+	}
+	else {
+		thread_unlock();
 		return 0;
+	}
 }
 
 struct node** opendir(char const * path){
