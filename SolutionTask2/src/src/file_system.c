@@ -156,6 +156,8 @@ static struct node* find_or_create(char const * pathname, struct node*(*create_n
         parse_name_folder(pathname + old_pos + len , &pos, &len);
         pos = pos +  old_pos + old_len;
 	}
+	if (flag == MKDIR && node)
+		return NULL; // dir exist
 	return node;
 }
 
