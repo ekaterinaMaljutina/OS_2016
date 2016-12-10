@@ -26,3 +26,15 @@ void *memset(void *dst, int fill, size_t size)
 		*to++ = fill;
 	return dst;
 }
+
+int __strcmp(char const *s, char const *t, int len) {
+    int i = 0;
+    int size = strlen(s);
+    for (; s[i] == t[i] && i<len; i++)
+        if (s[i] == '\0')
+            return 0;
+    if (i == size )
+    	return 0;
+    else 
+    	return 1;
+}

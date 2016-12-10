@@ -201,7 +201,7 @@ static void balloc_setup_nodes(void)
  * regions is free while other is reserved, and in that case our
  * algorithm guaratees that all regions that marked reserved in
  * the memory map won't be in the free ranges tree. */
-static void balloc_parse_mmap(const struct mboot_info *info)
+static void balloc_parse_mmap(const struct mboot_info *info, void* start_fs, void* end_fs)
 {
 	BUG_ON((info->flags & (1ul << 6)) == 0);
 
@@ -229,6 +229,10 @@ static void balloc_parse_mmap(const struct mboot_info *info)
 	__balloc_add_range(&memory_map, kbegin, kend);
 	__balloc_add_range(&free_ranges, kbegin, kend);
 
+
+	// __balloc_add_range(&memory_map, (uintptr_t)start_fs, (uintptr_t)end_fs);
+	// __balloc_add_range(&free_ranges, (uintptr_t)start_fs, (uintptr_t)end_fs);
+
 	ptr = begin;
 	while (ptr + sizeof(struct mboot_mmap_entry) <= end) {
 		const struct mboot_mmap_entry *entry =
@@ -240,7 +244,8 @@ static void balloc_parse_mmap(const struct mboot_info *info)
 			__balloc_remove_range(&free_ranges, rbegin, rend);
 		ptr += entry->size + sizeof(entry->size);
 	}
-
+	printf("start_fs = %llx, end_fs = %llx\n", (uintptr_t)start_fs, (uintptr_t)end_fs);
+	__balloc_remove_range(&free_ranges, (uintptr_t)start_fs, (uintptr_t)end_fs);
 	__balloc_remove_range(&free_ranges, kbegin, kend);
 }
 
@@ -259,7 +264,7 @@ static void __balloc_dump_ranges(const struct rb_tree *tree)
 static void balloc_dump_ranges(void)
 {
 	printf("known memory ranges:\n");
-	__balloc_dump_ranges(&memory_map);
+	// __balloc_dump_ranges(&memory_map);
 	printf("free memory ranges:\n");
 	__balloc_dump_ranges(&free_ranges);
 }
@@ -272,9 +277,9 @@ uintptr_t balloc_memory(void)
 	return node->end;
 }
 
-void balloc_setup(const struct mboot_info *info)
+void balloc_setup(const struct mboot_info *info, void* start_fs, void* end_fs)
 {
 	balloc_setup_nodes();
-	balloc_parse_mmap(info);
+	balloc_parse_mmap(info, start_fs, end_fs);
 	balloc_dump_ranges();
 }

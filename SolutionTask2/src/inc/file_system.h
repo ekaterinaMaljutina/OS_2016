@@ -10,8 +10,6 @@
 #define MKDIR  4
 #define OPEN   5
 
-#define MAX_FILE_DIS_COUNT 256
-
 struct node {
     char* name;
     uint64_t size;
@@ -29,7 +27,6 @@ int close_file(int fd);
 
 ssize_t read(int fd, void* buf, size_t nbyte);
 ssize_t write(int fd, const void* buf, size_t nbyte);
-
 
 int mkdir(const char *path);
 struct node** opendir(const char * path);

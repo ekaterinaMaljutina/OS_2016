@@ -7,6 +7,7 @@
 #include <print.h>
 #include <ints.h>
 #include <time.h>
+#include "string.h"
 
 #include "lock.h"
 
@@ -14,6 +15,8 @@
 
 #include "file_system.h"
 
+
+#include "ramfs.h"
 // #define DEBUG
 static void qemu_gdb_hang(void)
 {
@@ -215,39 +218,20 @@ void test_thread(){
     printf("return to main thread\n");
 }
 
-void main(void *bootstrap_info)
-{
-	qemu_gdb_hang();
-	serial_setup();
-	ints_setup();
-	// time_setup();
-	balloc_setup(bootstrap_info);
-	paging_setup();
-	page_alloc_setup();
-	mem_alloc_setup();
-	kmap_setup();
-	// enable_ints();
+int strcmp(char const *s, char const *t, int len) {
+    int i = 0;
+    int size = strlen(s);
+    for (; s[i] == t[i] && i<len; i++)
+        if (s[i] == '\0')
+            return 0;
+    if (i == size )
+    	return 0;
+    else 
+    	return 1;
+}
 
-
-	printf("Tests Begin\n");
-	test_buddy();
-	test_slab();
-	test_alloc();
-	test_kmap();
-	printf("Tests Finished\n");
-
-	init_threads();
-	time_setup();
-	
-
-	// printf("test_thread .. \n");
-	// test_thread();
-	// printf("test_thread .. ok \n");
-
-
-
+void test_fs() {
 	printf("test file system\n");
-	file_system_init();
 	file_system_print();
 
 	printf("check open file \n");
@@ -315,6 +299,48 @@ void main(void *bootstrap_info)
 	printf("\n\n");
 
 	printf("end of test\n");
+}
+
+
+void main(void *bootstrap_info)
+{
+	qemu_gdb_hang();
+	serial_setup();
+	ints_setup();
+	// time_setup();
+	uintptr_t addr = 0 ;
+	uintptr_t end  = 0;
+	init_ramfs(bootstrap_info, &addr, &end);
+	// printf(" main ..... start_fs = %llx, end_fs = %llx\n", addr, end);
+	balloc_setup(bootstrap_info,(void*)addr, (void*)end);
+	paging_setup();
+	page_alloc_setup();
+	mem_alloc_setup();
+	kmap_setup();
+	// enable_ints();
+
+
+	printf("Tests Begin\n");
+	test_buddy();
+	test_slab();
+	test_alloc();
+	test_kmap();
+	printf("Tests Finished\n");
+
+	init_threads();
+	time_setup();
+	
+
+	// printf("test_thread .. \n");
+	// test_thread();
+	// printf("test_thread .. ok \n");
+
+
+	file_system_init();
+	// test_fs();
+	
+
+	initramfs_to_fs();
 
 	while (1);
 }

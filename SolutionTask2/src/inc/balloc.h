@@ -20,7 +20,7 @@ struct memory_node {
 extern struct rb_tree memory_map;
 extern struct rb_tree free_ranges;
 
-void balloc_setup(const struct mboot_info *info);
+void balloc_setup(const struct mboot_info *info, void* start_fs, void* end_fs);
 uintptr_t __balloc_alloc(size_t size, uintptr_t align,
 			uintptr_t from, uintptr_t to);
 uintptr_t balloc_alloc(size_t size, uintptr_t from, uintptr_t to);
